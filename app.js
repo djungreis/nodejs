@@ -1,21 +1,32 @@
-const express = require('express');
-const path = require('path');
-const indexRouter = require('./routes/index');
-
+const express = require("express");
 const app = express();
-const PORT = 3000;
 
-// Serve static files from the "public" directory
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
 
-// Use the router for handling routes
-app.use('/', indexRouter);
+const VERIFY_TOKEN = process.env.VERIFY_TOKEN || "carbot123";
 
-// Catch-all route for handling 404 errors
-app.use((req, res, next) => {
-    res.status(404).sendFile(path.join(__dirname, 'views', '404.html'));
-  });
+app.get("/", (req, res) => {
+  res.send("alphasec");
+});
 
+app.get("/webhook", (req, res) => {
+  const mode = req.query["hub.mode"];
+  const token = req.query["hub.verify_token"];
+  const challenge = req.query["hub.challenge"];
+
+  if (mode === "subscribe" && token === VERIFY_TOKEN) {
+    return res.status(200).send(challenge);
+  }
+  return res.sendStatus(403);
+});
+
+app.post("/webhook", (req, res) => {
+  console.log("NEW MESSAGE FROM WHATSAPP");
+  console.log(JSON.stringify(req.body, null, 2));
+  res.sendStatus(200);
+});
+
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Server running at http://localhost:${PORT}/`);
+  console.log("Server running");
 });
